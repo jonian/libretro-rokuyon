@@ -76,7 +76,11 @@ $(BUILD):
 switch:
 	$(MAKE) -f Makefile.switch
 
+libretro:
+	$(MAKE) -f Makefile.libretro
+
 clean:
 	if [ -d "build-switch" ]; then $(MAKE) -f Makefile.switch clean; fi
+	if [ -d "build-libretro" ]; then $(MAKE) -f Makefile.libretro clean; fi
 	rm -rf $(BUILD)
 	rm -f $(NAME)
