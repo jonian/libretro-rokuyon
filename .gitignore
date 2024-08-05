@@ -1,6 +1,8 @@
 /build
 /build-switch
+/build-libretro
 /rokuyon
+/rokuyon*.so
 /rokuyon.elf
 /rokuyon.nacp
 /rokuyon.nro
