@@ -42,6 +42,7 @@ static int keymap[] = {
   RETRO_DEVICE_ID_JOYPAD_DOWN,
   RETRO_DEVICE_ID_JOYPAD_LEFT,
   RETRO_DEVICE_ID_JOYPAD_RIGHT,
+  0, 0,
   RETRO_DEVICE_ID_JOYPAD_L,
   RETRO_DEVICE_ID_JOYPAD_R
 };
@@ -259,7 +260,7 @@ void retro_get_system_info(retro_system_info* info)
   info->need_fullpath = true;
   info->valid_extensions = "z64";
   info->library_version = VERSION;
-  info->library_name = "rokuyon";
+  info->library_name = "Rokuyon";
   info->block_extract = true;
 }
 
@@ -378,17 +379,20 @@ void retro_run(void)
   float cpadX = getAxisState(RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X);
   float cpadY = getAxisState(RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y);
 
-  if (cpadX < 0) PIF::pressKey(12); // C-Pad Left
+  cpadX = (cpadX / +32767);
+  cpadY = (cpadY / -32767);
+
+  if (cpadX == -1) PIF::pressKey(14); // C-Pad Left
+  else PIF::releaseKey(14);
+
+  if (cpadX == +1) PIF::pressKey(15); // C-Pad Right
+  else PIF::releaseKey(15);
+
+  if (cpadY == +1) PIF::pressKey(12); // C-Pad Up
   else PIF::releaseKey(12);
 
-  if (cpadX > 0) PIF::pressKey(13); // C-Pad Right
+  if (cpadY == -1) PIF::pressKey(13); // C-Pad Down
   else PIF::releaseKey(13);
-
-  if (cpadY < 0) PIF::pressKey(10); // C-Pad Up
-  else PIF::releaseKey(10);
-
-  if (cpadY > 0) PIF::pressKey(11); // C-Pad Down
-  else PIF::releaseKey(11);
 
   for (int i = 0; i < sizeof(keymap) / sizeof(*keymap); ++i)
   {
