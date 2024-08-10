@@ -1,6 +1,9 @@
 name: Libretro Builds
 
 on:
+  push:
+    branches:
+    - libretro
   workflow_dispatch:
 
 jobs:
