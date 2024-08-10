@@ -1,6 +1,7 @@
 #include <cstdarg>
 #include <cstring>
 #include <vector>
+#include <regex>
 
 #include "libretro.h"
 
@@ -49,10 +50,12 @@ static int keymap[] = {
 
 static std::string normalizePath(std::string path, bool addSlash = false)
 {
-  std::string normalizedPath = path;
-  if (addSlash && normalizedPath.back() != '/')
-    normalizedPath += '/';
-  return normalizedPath;
+  std::string newPath = path;
+  if (addSlash && newPath.back() != '/') newPath += '/';
+#ifdef WINDOWS
+  std::replace(newPath.begin(), newPath.end(), '\\', '/');
+#endif
+  return newPath;
 }
 
 static void logFallback(enum retro_log_level level, const char *fmt, ...)
@@ -143,7 +146,6 @@ static void initInput(void)
     { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R, "R" },
     { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L, "L" },
     { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2, "Z" },
-    { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2, "Stick Mod" },
     { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Stick X" },
     { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Stick Y" },
     { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "C-Pad X" },
@@ -327,7 +329,7 @@ void retro_deinit(void)
 
 bool retro_load_game(const struct retro_game_info* info)
 {
-  romPath = info->path;
+  romPath = normalizePath(info->path);
 
   initConfig();
   updateConfig();
@@ -366,12 +368,6 @@ void retro_run(void)
   {
     stickX = stickX * 60 / 80;
     stickY = stickY * 60 / 80;
-  }
-
-  if (getButtonState(RETRO_DEVICE_ID_JOYPAD_R2))
-  {
-    stickX /= 2;
-    stickY /= 2;
   }
 
   PIF::setStick(stickX, stickY);
