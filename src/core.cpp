@@ -108,7 +108,9 @@ bool Core::bootRom(const std::string &path)
     fclose(romFile);
 
     // Derive the save path from the ROM path
+#ifndef __LIBRETRO__
     savePath = path.substr(0, path.rfind(".")) + ".sav";
+#endif
     if (save) delete[] save;
     saveDirty = false;
 

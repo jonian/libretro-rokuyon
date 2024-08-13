@@ -2,7 +2,9 @@
 #include <cstring>
 #include <vector>
 #include <regex>
+#include <fstream>
 
+#include "gamedb.h"
 #include "libretro.h"
 
 #include "../ai.h"
@@ -56,6 +58,12 @@ static std::string normalizePath(std::string path, bool addSlash = false)
   std::replace(newPath.begin(), newPath.end(), '\\', '/');
 #endif
   return newPath;
+}
+
+static std::string getNameFromPath(std::string path)
+{
+  std::string base = path.substr(path.find_last_of("/\\") + 1);
+  return base.substr(0, base.rfind("."));
 }
 
 static void logFallback(enum retro_log_level level, const char *fmt, ...)
@@ -330,12 +338,30 @@ void retro_deinit(void)
 bool retro_load_game(const struct retro_game_info* info)
 {
   romPath = normalizePath(info->path);
+  Core::savePath = normalizePath(savesPath + getNameFromPath(info->path) + ".sav");
 
   initConfig();
   updateConfig();
   initInput();
 
-  return Core::bootRom(romPath);
+  if (Core::bootRom(romPath))
+  {
+    if (!Core::saveSize)
+    {
+      std::string gameId = GameDB::getGameID(romPath);
+      uint32_t saveSize = GameDB::getSaveSize(gameId);
+
+      if (saveSize)
+      {
+        Core::resizeSave(saveSize);
+        Core::bootRom(romPath);
+      }
+    }
+
+    return true;
+  }
+
+  return false;
 }
 
 bool retro_load_game_special(unsigned type, const struct retro_game_info* info, size_t info_size)
@@ -436,7 +462,7 @@ size_t retro_get_memory_size(unsigned id)
 {
   if (id == RETRO_MEMORY_SYSTEM_RAM)
   {
-    return 0;
+    return Settings::expansionPak ? 0x800000 : 0x400000;
   }
   return 0;
 }
