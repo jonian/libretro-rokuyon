@@ -34,6 +34,8 @@ static std::string savesPath;
 static std::string gamePath;
 static std::string savePath;
 
+static GameInfo gameInfo = {};
+
 static std::vector<uint32_t> videoBuffer;
 static uint32_t videoBufferSize;
 
@@ -358,16 +360,12 @@ bool retro_load_game(const struct retro_game_info* info)
 
   if (Core::bootRom(gamePath))
   {
-    if (!Core::saveSize)
-    {
-      std::string gameId = GameDB::getGameID(gamePath);
-      uint32_t saveSize = GameDB::getSaveSize(gameId);
+    gameInfo = GameDB::analyze(Core::rom);
 
-      if (saveSize)
-      {
-        Core::resizeSave(saveSize);
-        Core::bootRom(gamePath);
-      }
+    if (!Core::saveSize && gameInfo.saveSize)
+    {
+      Core::resizeSave(gameInfo.saveSize);
+      Core::bootRom(gamePath);
     }
 
     return true;
@@ -462,7 +460,7 @@ bool retro_unserialize(const void* data, size_t size)
 
 unsigned retro_get_region(void)
 {
-  return RETRO_REGION_NTSC;
+  return gameInfo.region == "PAL" ? RETRO_REGION_PAL : RETRO_REGION_NTSC;
 }
 
 unsigned retro_api_version()
