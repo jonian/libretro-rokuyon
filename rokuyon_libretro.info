@@ -25,7 +25,7 @@ memory_descriptors = "true"
 libretro_saves = "true"
 core_options = "true"
 load_subsystem = "false"
-needs_fullpath = "true"
+needs_fullpath = "false"
 disk_control = "false"
 is_experimental = "true"
 

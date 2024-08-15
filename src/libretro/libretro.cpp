@@ -278,7 +278,7 @@ static void playbackAudio()
 
 void retro_get_system_info(retro_system_info* info)
 {
-  info->need_fullpath = true;
+  info->need_fullpath = false;
   info->valid_extensions = "z64";
   info->library_version = VERSION;
   info->library_name = "Rokuyon";
@@ -355,6 +355,11 @@ bool retro_load_game(const struct retro_game_info* info)
   updateConfig();
   initInput();
 
+  Core::stop();
+
+  Core::rom = (uint8_t*)info->data;
+  Core::romSize = (uint32_t)info->size;
+
   Core::savePath = savePath;
   Core::saveSize = 0;
 
@@ -386,6 +391,7 @@ void retro_unload_game(void)
 
 void retro_reset(void)
 {
+  Core::stop();
   Core::bootRom(gamePath);
 }
 
