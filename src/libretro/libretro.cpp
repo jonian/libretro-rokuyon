@@ -1,5 +1,6 @@
 #include <cstdarg>
 #include <cstring>
+#include <cstdint>
 #include <vector>
 #include <regex>
 #include <fstream>
@@ -10,6 +11,7 @@
 #include "../ai.h"
 #include "../pif.h"
 #include "../vi.h"
+#include "../memory.h"
 #include "../core.h"
 #include "../settings.h"
 
@@ -28,7 +30,9 @@ static retro_log_printf_t logCallback;
 
 static std::string systemPath;
 static std::string savesPath;
-static std::string romPath;
+
+static std::string gamePath;
+static std::string savePath;
 
 static std::vector<uint32_t> videoBuffer;
 static uint32_t videoBufferSize;
@@ -63,6 +67,11 @@ static std::string normalizePath(std::string path, bool addSlash = false)
 static std::string getNameFromPath(std::string path)
 {
   std::string base = path.substr(path.find_last_of("/\\") + 1);
+  for (const auto& delim : {".zip#", ".7z#", ".apk#"})
+  {
+    size_t delimPos = base.find(delim);
+    if (delimPos != std::string::npos) base = base.substr(0, delimPos);
+  }
   return base.substr(0, base.rfind("."));
 }
 
@@ -271,7 +280,7 @@ void retro_get_system_info(retro_system_info* info)
   info->valid_extensions = "z64";
   info->library_version = VERSION;
   info->library_name = "Rokuyon";
-  info->block_extract = true;
+  info->block_extract = false;
 }
 
 void retro_get_system_av_info(retro_system_av_info* info)
@@ -337,24 +346,27 @@ void retro_deinit(void)
 
 bool retro_load_game(const struct retro_game_info* info)
 {
-  romPath = normalizePath(info->path);
-  Core::savePath = normalizePath(savesPath + getNameFromPath(info->path) + ".sav");
+  gamePath = normalizePath(info->path);
+  savePath = normalizePath(savesPath + getNameFromPath(info->path) + ".sav");
 
   initConfig();
   updateConfig();
   initInput();
 
-  if (Core::bootRom(romPath))
+  Core::savePath = savePath;
+  Core::saveSize = 0;
+
+  if (Core::bootRom(gamePath))
   {
     if (!Core::saveSize)
     {
-      std::string gameId = GameDB::getGameID(romPath);
+      std::string gameId = GameDB::getGameID(gamePath);
       uint32_t saveSize = GameDB::getSaveSize(gameId);
 
       if (saveSize)
       {
         Core::resizeSave(saveSize);
-        Core::bootRom(romPath);
+        Core::bootRom(gamePath);
       }
     }
 
@@ -376,7 +388,7 @@ void retro_unload_game(void)
 
 void retro_reset(void)
 {
-  Core::bootRom(romPath);
+  Core::bootRom(gamePath);
 }
 
 void retro_run(void)
@@ -471,7 +483,8 @@ void* retro_get_memory_data(unsigned id)
 {
   if (id == RETRO_MEMORY_SYSTEM_RAM)
   {
-    return 0;
+    static uint32_t data = Memory::read<uint32_t>(0);
+    return &data;
   }
   return NULL;
 }

@@ -35,9 +35,7 @@ namespace Core
     extern uint8_t *save;
     extern uint32_t romSize;
     extern uint32_t saveSize;
-#ifdef __LIBRETRO__
     extern std::string savePath;
-#endif
 
     bool bootRom(const std::string &path);
     void resizeSave(uint32_t newSize);
