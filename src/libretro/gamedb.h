@@ -9,6 +9,8 @@ struct GameInfo {
   std::string region;
   std::string regionCode;
 
+  bool ntsc = true;
+
   uint32_t revision = 0;
   uint32_t saveType = 0;
   uint32_t saveSize = 0;

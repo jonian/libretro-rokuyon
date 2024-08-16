@@ -180,7 +180,7 @@ static void initConfig()
   static const retro_variable values[] = {
     { "rokuyon_fpsLimiter", "FPS Limiter; disabled|enabled" },
     { "rokuyon_expansionPak", "Expansion Pak; disabled|enabled" },
-    { "rokuyon_threadedRdp", "Threaded RDP; enabled|disabled" },
+    { "rokuyon_threadedRdp", "Threaded RDP; disabled|enabled" },
     { "rokuyon_texFilter", "Texture Filter; disabled|enabled" },
     { nullptr, nullptr }
   };
@@ -192,7 +192,7 @@ static void updateConfig()
 {
   Settings::fpsLimiter = fetchVariableBool("rokuyon_fpsLimiter", false);
   Settings::expansionPak = fetchVariableBool("rokuyon_expansionPak", false);
-  Settings::threadedRdp = fetchVariableBool("rokuyon_threadedRdp", true);
+  Settings::threadedRdp = fetchVariableBool("rokuyon_threadedRdp", false);
   Settings::texFilter = fetchVariableBool("rokuyon_texFilter", false);
 }
 
@@ -294,8 +294,8 @@ void retro_get_system_av_info(retro_system_av_info* info)
   info->geometry.max_height = info->geometry.base_height;
   info->geometry.aspect_ratio = 4.0 / 3.0;
 
-  info->timing.fps = 60.0;
-  info->timing.sample_rate = 48000.0;
+  info->timing.fps = gameInfo.ntsc ? 60.0 : 50.0;
+  info->timing.sample_rate = 44100.0;
 }
 
 void retro_set_environment(retro_environment_t cb)
@@ -369,6 +369,7 @@ bool retro_load_game(const struct retro_game_info* info)
 
     if (!Core::saveSize && gameInfo.saveSize)
     {
+      Core::stop();
       Core::resizeSave(gameInfo.saveSize);
       Core::bootRom(gamePath);
     }
@@ -466,7 +467,7 @@ bool retro_unserialize(const void* data, size_t size)
 
 unsigned retro_get_region(void)
 {
-  return gameInfo.region == "PAL" ? RETRO_REGION_PAL : RETRO_REGION_NTSC;
+  return gameInfo.ntsc ? RETRO_REGION_NTSC : RETRO_REGION_PAL;
 }
 
 unsigned retro_api_version()

@@ -224,6 +224,7 @@ GameInfo GameDB::analyze(const uint8_t* data)
   game.id += (char)data[0x3c];
   game.id += (char)data[0x3d];
 
+  game.region = "NTSC";
   switch(data[0x3e])
   {
     case 'A': game.region = "NTSC"; break;  // North America + Japan
@@ -243,6 +244,7 @@ GameInfo GameDB::analyze(const uint8_t* data)
 
   game.regionCode = data[0x3e];
   game.revision = data[0x3f];
+  game.ntsc = game.region == "NTSC";
 
   const DBEntry* entry = findEntry(game.id);
   if (entry) game.saveType = entry->saveType;
