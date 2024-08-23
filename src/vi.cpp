@@ -187,7 +187,11 @@ void VI::drawFrame()
                         uint8_t r = (color >> 24) & 0xFF;
                         uint8_t g = (color >> 16) & 0xFF;
                         uint8_t b = (color >>  8) & 0xFF;
+#ifdef __LIBRETRO__
+                        fb->data[y * fb->width + x] = (0xFF << 24) | (r << 16) | (g << 8) | b;
+#else
                         fb->data[y * fb->width + x] = (0xFF << 24) | (b << 16) | (g << 8) | r;
+#endif
                     }
                 }
                 break;
@@ -202,7 +206,11 @@ void VI::drawFrame()
                         uint8_t r = ((color >> 11) & 0x1F) * 255 / 31;
                         uint8_t g = ((color >>  6) & 0x1F) * 255 / 31;
                         uint8_t b = ((color >>  1) & 0x1F) * 255 / 31;
+#ifdef __LIBRETRO__
+                        fb->data[y * fb->width + x] = (0xFF << 24) | (r << 16) | (g << 8) | b;
+#else
                         fb->data[y * fb->width + x] = (0xFF << 24) | (b << 16) | (g << 8) | r;
+#endif
                     }
                 }
                 break;

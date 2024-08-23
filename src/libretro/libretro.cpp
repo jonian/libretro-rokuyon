@@ -227,20 +227,6 @@ static void updateVideoGeometry(int width, int height)
   }
 }
 
-static void convertColors(uint32_t *src, uint32_t *dst, size_t pixels)
-{
-  for (int i = 0; i < pixels; ++i)
-  {
-    uint32_t pixel = src[i];
-
-    dst[i] =
-      ((pixel & 0xFF000000)) |
-      ((pixel & 0x00FF0000) >> 16) |
-      ((pixel & 0x0000FF00)) |
-      ((pixel & 0x000000FF) << 16);
-  }
-}
-
 static void drawTexture()
 {
   if (_Framebuffer *fb = VI::getFramebuffer())
@@ -248,7 +234,7 @@ static void drawTexture()
     updateVideoGeometry(fb->width, fb->height);
     resizeVideoBuffer(fb->width * fb->height);
 
-    convertColors(fb->data, videoBuffer.data(), videoBufferSize);
+    memcpy(videoBuffer.data(), fb->data, videoBufferSize * sizeof(uint32_t));
     videoCallback(videoBuffer.data(), fb->width, fb->height, fb->width * 4);
 
     delete fb;
