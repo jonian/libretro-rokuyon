@@ -56,6 +56,11 @@ static int keymap[] = {
   RETRO_DEVICE_ID_JOYPAD_R
 };
 
+static int32_t clampValue(int32_t value, int32_t min, int32_t max)
+{
+  return std::max(min, std::min(max, value));
+}
+
 static std::string normalizePath(std::string path, bool addSlash = false)
 {
   std::string newPath = path;
@@ -210,7 +215,7 @@ static void resizeVideoBuffer(uint32_t newSize)
   {
     videoBufferSize = newSize;
     videoBuffer.resize(videoBufferSize);
-    memset(videoBuffer.data(), 0, videoBuffer.size() * sizeof(videoBuffer[0]));
+    memset(videoBuffer.data(), 0, videoBufferSize * sizeof(uint32_t));
   }
 }
 
@@ -227,15 +232,39 @@ static void updateVideoGeometry(int width, int height)
   }
 }
 
-static void drawTexture()
+static void copyScreen(uint32_t *src, uint32_t *dst, uint32_t sw, uint32_t sh, uint32_t dw, uint32_t dh)
+{
+  if (sw > dw || sh > dh)
+  {
+    int offsetX = (sw - dw) / 2;
+    int offsetY = (sh - dh) / 2;
+
+    for (size_t y = 0; y < dh; y++)
+    {
+      size_t srcIndex = ((y + offsetY) * sw) + offsetX;
+      size_t dstIndex = y * dw;
+
+      memcpy(dst + dstIndex, src + srcIndex, dw * sizeof(uint32_t));
+    }
+  }
+  else
+  {
+    memcpy(dst, src, sw * sh * sizeof(uint32_t));
+  }
+}
+
+static void renderVideo()
 {
   if (_Framebuffer *fb = VI::getFramebuffer())
   {
-    updateVideoGeometry(fb->width, fb->height);
-    resizeVideoBuffer(fb->width * fb->height);
+    int fbWidth = clampValue(fb->width, 256, 640);
+    int fbHeight = clampValue(fb->height, 224, 480);
 
-    memcpy(videoBuffer.data(), fb->data, videoBufferSize * sizeof(uint32_t));
-    videoCallback(videoBuffer.data(), fb->width, fb->height, fb->width * 4);
+    updateVideoGeometry(fbWidth, fbHeight);
+    resizeVideoBuffer(fbWidth * fbHeight);
+
+    copyScreen(fb->data, videoBuffer.data(), fb->width, fb->height, videoWidth, videoHeight);
+    videoCallback(videoBuffer.data(), videoWidth, videoHeight, videoWidth * 4);
 
     delete fb;
   }
@@ -245,7 +274,7 @@ static void drawTexture()
   }
 }
 
-static void playbackAudio()
+static void renderAudio()
 {
   static int16_t buffer[1024 * 2];
   uint32_t original[1024];
@@ -490,8 +519,8 @@ void retro_run(void)
       PIF::releaseKey(i);
   }
 
-  drawTexture();
-  playbackAudio();
+  renderVideo();
+  renderAudio();
 }
 
 void retro_set_controller_port_device(unsigned port, unsigned device)
