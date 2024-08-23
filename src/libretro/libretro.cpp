@@ -28,6 +28,8 @@ static retro_input_state_t inputStateCallback;
 static struct retro_log_callback logging;
 static retro_log_printf_t logCallback;
 
+static bool cropBorders;
+
 static std::string systemPath;
 static std::string savesPath;
 
@@ -187,6 +189,7 @@ static void initConfig()
     { "rokuyon_expansionPak", "Expansion Pak; disabled|enabled" },
     { "rokuyon_threadedRdp", "Threaded RDP; disabled|enabled" },
     { "rokuyon_texFilter", "Texture Filter; disabled|enabled" },
+    { "rokuyon_cropBorders", "Crop Borders; disabled|enabled" },
     { nullptr, nullptr }
   };
 
@@ -199,6 +202,8 @@ static void updateConfig()
   Settings::expansionPak = fetchVariableBool("rokuyon_expansionPak", false);
   Settings::threadedRdp = fetchVariableBool("rokuyon_threadedRdp", false);
   Settings::texFilter = fetchVariableBool("rokuyon_texFilter", false);
+
+  cropBorders = fetchVariableBool("rokuyon_cropBorders", false);
 }
 
 static void checkConfigVariables()
@@ -257,8 +262,9 @@ static void renderVideo()
 {
   if (_Framebuffer *fb = VI::getFramebuffer())
   {
-    int fbWidth = clampValue(fb->width, 256, 640);
-    int fbHeight = clampValue(fb->height, 224, 480);
+    int fbBorder = cropBorders ? 8 : 0;
+    int fbWidth = clampValue(fb->width, 256, 640) - (fbBorder * 2);
+    int fbHeight = clampValue(fb->height, 224, 480) - (fbBorder * 2);
 
     updateVideoGeometry(fbWidth, fbHeight);
     resizeVideoBuffer(fbWidth * fbHeight);
