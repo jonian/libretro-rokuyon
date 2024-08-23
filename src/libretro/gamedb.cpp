@@ -249,6 +249,21 @@ GameInfo GameDB::analyze(const uint8_t* data)
   const DBEntry* entry = findEntry(game.id);
   if (entry) game.saveType = entry->saveType;
 
+  if (game.regionCode == "J")
+  {
+    // EEPROM4K
+    if (game.id == "NDK") game.saveType = 1; // Dark Rift [Space Dynamites (J)]
+    if (game.id == "NWT") game.saveType = 1; // Wetrix
+
+    // EEPROM16K
+    if (game.id == "ND3") game.saveType = 2; // Akumajou Dracula Mokushiroku (J)
+    if (game.id == "ND4") game.saveType = 2; // Akumajou Dracula Mokushiroku Gaiden: Legend of Cornell (J)
+    if (game.id == "NK4") game.saveType = 2; // Kirby 64: The Crystal Shards [Hoshi no Kirby 64 (J)]
+
+    // SRAM256K
+    if (game.id == "N3H") game.saveType = 3; // Ganbare! Nippon! Olympics 2000
+  }
+
   game.saveSize = getSaveSize(game.saveType);
 
   return game;
