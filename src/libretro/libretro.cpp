@@ -262,10 +262,60 @@ static void playbackAudio()
   audioBatchCallback(buffer, size);
 }
 
+static uint8_t* convertRom(const void* data, const size_t& size)
+{
+  const uint8_t* input = reinterpret_cast<const uint8_t*>(data);
+  uint8_t* output = new uint8_t[size];
+
+  // Extract the first four bytes
+  uint32_t header = (input[0] << 24) | (input[1] << 16) | (input[2] << 8) | input[3];
+
+  // Known ROM format headers
+  const uint32_t N64_HEADER = 0x40123780; // Little Endian (.n64)
+  const uint32_t V64_HEADER = 0x37804012; // Byte Swapped (.v64)
+  const uint32_t Z64_HEADER = 0x80371240; // Big Endian (.z64)
+
+  switch (header)
+  {
+    case N64_HEADER:
+      // Reverse bytes in 4-byte chunks
+      logCallback(RETRO_LOG_INFO, "Detected ROM format: N64\n");
+      for (size_t i = 0; i < size; i += 4)
+      {
+        output[i + 0] = input[i + 3];
+        output[i + 1] = input[i + 2];
+        output[i + 2] = input[i + 1];
+        output[i + 3] = input[i + 0];
+      }
+      break;
+    case V64_HEADER:
+      // Swap adjacent bytes in 2-byte chunks
+      logCallback(RETRO_LOG_INFO, "Detected ROM format: V64\n");
+      for (size_t i = 0; i < size; i += 2)
+      {
+        output[i + 0] = input[i + 1];
+        output[i + 1] = input[i + 0];
+      }
+      break;
+    case Z64_HEADER:
+      // No change needed, copy the data as is
+      logCallback(RETRO_LOG_INFO, "Detected ROM format: Z64\n");
+      memcpy(output, input, size);
+      break;
+    default:
+      // Unknown format, copy the data as is
+      logCallback(RETRO_LOG_INFO, "Detected ROM format: Unknown\n");
+      memcpy(output, input, size);
+      break;
+  }
+
+  return output;
+}
+
 void retro_get_system_info(retro_system_info* info)
 {
   info->need_fullpath = false;
-  info->valid_extensions = "z64";
+  info->valid_extensions = "z64|n64|v64";
   info->library_version = VERSION;
   info->library_name = "Rokuyon";
   info->block_extract = false;
@@ -286,6 +336,13 @@ void retro_get_system_av_info(retro_system_av_info* info)
 
 void retro_set_environment(retro_environment_t cb)
 {
+  const struct retro_system_content_info_override contentOverrides[] = {
+    { "z64|n64|v64", false, false },
+    {}
+  };
+
+  cb(RETRO_ENVIRONMENT_SET_CONTENT_INFO_OVERRIDE, (void*)contentOverrides);
+
   envCallback = cb;
 }
 
@@ -343,7 +400,7 @@ bool retro_load_game(const struct retro_game_info* info)
 
   Core::stop();
 
-  Core::rom = (uint8_t*)info->data;
+  Core::rom = convertRom(info->data, info->size);
   Core::romSize = (uint32_t)info->size;
 
   Core::savePath = savePath;
@@ -374,6 +431,12 @@ bool retro_load_game_special(unsigned type, const struct retro_game_info* info, 
 void retro_unload_game(void)
 {
   Core::stop();
+
+  Core::romSize = 0;
+  if (Core::rom) delete[] Core::rom;
+
+  Core::saveSize = 0;
+  if (Core::save) delete[] Core::save;
 }
 
 void retro_reset(void)
