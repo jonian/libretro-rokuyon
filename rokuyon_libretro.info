@@ -1,7 +1,7 @@
 # Software Information
 display_name = "Nintendo - Nintendo 64 (Rokuyon)"
 authors = "Hydr8gon"
-supported_extensions = "z64"
+supported_extensions = "z64|n64|v64"
 corename = "Rokuyon"
 license = "GPLv3"
 permissions = ""

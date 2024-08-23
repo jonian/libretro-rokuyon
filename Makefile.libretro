@@ -1,6 +1,6 @@
 NAME := rokuyon_libretro
 BUILD := build-libretro
-GIT_VERSION := "$(shell git describe --abbrev=7 --always --tags)"
+GIT_VERSION := $(shell git describe --abbrev=7 --always)
 SRCS := src src/libretro
 ARGS := -O3 -flto -std=c++11 -DLOG_LEVEL=0 -D__LIBRETRO__ -DVERSION=\"$(GIT_VERSION)\"
 
