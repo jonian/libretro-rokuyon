@@ -156,8 +156,10 @@ bool Core::bootRom(const std::string &path)
     RSP_CP0::reset();
     RSP_CP2::reset();
 
+#ifndef __LIBRETRO__
     // Start the emulator
     start();
+#endif
     return true;
 }
 

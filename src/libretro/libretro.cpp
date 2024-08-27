@@ -517,8 +517,12 @@ void retro_run(void)
       PIF::releaseKey(i);
   }
 
+  Core::start();
+
   renderVideo();
   renderAudio();
+
+  Core::stop();
 }
 
 void retro_set_controller_port_device(unsigned port, unsigned device)
