@@ -283,15 +283,7 @@ static void renderVideo()
 static void renderAudio()
 {
   static int16_t buffer[1024 * 2];
-  uint32_t original[1024];
-
-  AI::fillBuffer(original);
-
-  for (int i = 0; i < 1024; i++)
-  {
-    buffer[i * 2 + 0] = original[i] >>  0;
-    buffer[i * 2 + 1] = original[i] >> 16;
-  }
+  AI::fillBuffer((uint32_t*)buffer);
 
   uint32_t size = sizeof(buffer) / (2 * sizeof(int16_t));
   audioBatchCallback(buffer, size);
@@ -366,7 +358,7 @@ void retro_get_system_av_info(retro_system_av_info* info)
   info->geometry.aspect_ratio = 4.0 / 3.0;
 
   info->timing.fps = gameInfo.ntsc ? 60.0 : 50.0;
-  info->timing.sample_rate = 44100.0;
+  info->timing.sample_rate = 48000.0;
 }
 
 void retro_set_environment(retro_environment_t cb)
