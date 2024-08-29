@@ -1,6 +1,6 @@
 # Software Information
 display_name = "Nintendo - Nintendo 64 (Rokuyon)"
-authors = "Hydr8gon"
+authors = "Hydr8gon|Jonian Guveli"
 supported_extensions = "z64|n64|v64"
 corename = "Rokuyon"
 license = "GPLv3"
@@ -29,4 +29,4 @@ needs_fullpath = "false"
 disk_control = "false"
 is_experimental = "true"
 
-description = "An experimental N64 emulator"
+description = "Unofficial libretro port of Rokuyon, an experimental N64 emulator"
