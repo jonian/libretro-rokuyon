@@ -12,7 +12,7 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v1
+      uses: actions/checkout@v4
     - name: Install MSYS2
       uses: msys2/setup-msys2@v2
       with:
@@ -27,7 +27,7 @@ jobs:
       shell: msys2 {0}
       working-directory: ${{ github.workspace }}
     - name: Upload
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: rokuyon-libretro-windows
         path: |
@@ -39,12 +39,12 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v1
+      uses: actions/checkout@v4
     - name: Compile
       run: |
         make libretro -j$(sysctl -n hw.logicalcpu)
     - name: Upload
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: rokuyon-libretro-mac
         path: |
@@ -60,13 +60,13 @@ jobs:
         sudo apt update
         sudo apt install gcc -y
     - name: Checkout
-      uses: actions/checkout@v1
+      uses: actions/checkout@v4
     - name: Compile
       run: |
         git config --global protocol.file.allow always
         make libretro -j$(nproc)
     - name: Upload
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: rokuyon-libretro-linux
         path: |
@@ -86,7 +86,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Get artifacts
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
     - name: Package artifacts
       run: for i in ./*; do zip -r -j ${i}.zip $i; done
     - name: Create new release
