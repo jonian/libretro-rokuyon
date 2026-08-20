@@ -548,8 +548,7 @@ void* retro_get_memory_data(unsigned id)
 {
   if (id == RETRO_MEMORY_SYSTEM_RAM)
   {
-    static uint32_t data = Memory::read<uint32_t>(0);
-    return &data;
+    return Memory::getRamData();
   }
   if (id == RETRO_MEMORY_SAVE_RAM)
   {

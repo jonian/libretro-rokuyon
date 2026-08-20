@@ -26,6 +26,10 @@ namespace Memory {
     void getEntry(uint32_t index, uint32_t &entryLo0, uint32_t &entryLo1, uint32_t &entryHi, uint32_t &pageMask);
     void setEntry(uint32_t index, uint32_t  entryLo0, uint32_t  entryLo1, uint32_t  entryHi, uint32_t  pageMask);
 
+#ifdef __LIBRETRO__
+    uint8_t *getRamData();
+#endif
+
     template <typename T> T read(uint32_t address);
     template <typename T> void write(uint32_t address, T value);
 }

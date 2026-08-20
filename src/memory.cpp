@@ -80,6 +80,12 @@ void Memory::reset() {
         entries[i].entryHi = 0x80000000;
 }
 
+#ifdef __LIBRETRO__
+uint8_t *Memory::getRamData() {
+    return rdram;
+}
+#endif
+
 void Memory::getEntry(uint32_t index, uint32_t &entryLo0, uint32_t &entryLo1, uint32_t &entryHi, uint32_t &pageMask) {
     // Get the TLB entry at the given index
     TLBEntry &entry = entries[index & 0x1F];
