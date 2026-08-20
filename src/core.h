@@ -33,7 +33,6 @@ namespace Core {
     extern uint8_t *save;
     extern uint32_t romSize;
     extern uint32_t saveSize;
-    extern std::string savePath;
 
     bool bootRom(const std::string &path);
     void resizeSave(uint32_t newSize);

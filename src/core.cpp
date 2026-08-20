@@ -106,7 +106,6 @@ bool Core::bootRom(const std::string &path) {
 
     // Derive the save path from the ROM path
     savePath = path.substr(0, path.rfind(".")) + ".sav";
-#endif
     if (save) delete[] save;
     saveDirty = false;
 
@@ -125,6 +124,7 @@ bool Core::bootRom(const std::string &path) {
         saveSize = 0;
         save = nullptr;
     }
+#endif
 
     // Reset the scheduler
     cpuRunning = true;
@@ -239,12 +239,14 @@ void Core::runLoop() {
 }
 
 void Core::saveLoop() {
+#ifndef __LIBRETRO__
     while (running) {
         // Every few seconds, check if the save file should be updated
         std::unique_lock<std::mutex> lock(waitMutex);
         condVar.wait_for(lock, std::chrono::seconds(3), [&]{ return !running; });
         updateSave();
     }
+#endif
 }
 
 void Core::countFrame() {
@@ -272,6 +274,7 @@ void Core::writeSave(uint32_t address, uint8_t value) {
 }
 
 void Core::updateSave() {
+#ifndef __LIBRETRO__
     // Update the save file if the data changed
     saveMutex.lock();
     if (saveDirty) {
@@ -283,6 +286,7 @@ void Core::updateSave() {
         }
     }
     saveMutex.unlock();
+#endif
 }
 
 void Core::resetCycles() {

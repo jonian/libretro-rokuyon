@@ -34,7 +34,6 @@ static std::string systemPath;
 static std::string savesPath;
 
 static std::string gamePath;
-static std::string savePath;
 
 static GameInfo gameInfo = {};
 
@@ -71,17 +70,6 @@ static std::string normalizePath(std::string path, bool addSlash = false)
   std::replace(newPath.begin(), newPath.end(), '\\', '/');
 #endif
   return newPath;
-}
-
-static std::string getNameFromPath(std::string path)
-{
-  std::string base = path.substr(path.find_last_of("/\\") + 1);
-  for (const auto& delim : {".zip#", ".7z#", ".apk#"})
-  {
-    size_t delimPos = base.find(delim);
-    if (delimPos != std::string::npos) base = base.substr(0, delimPos);
-  }
-  return base.substr(0, base.rfind("."));
 }
 
 static void logFallback(enum retro_log_level level, const char *fmt, ...)
@@ -418,9 +406,6 @@ void retro_deinit(void)
 
 bool retro_load_game(const struct retro_game_info* info)
 {
-  gamePath = normalizePath(info->path);
-  savePath = normalizePath(savesPath + getNameFromPath(info->path) + ".sav");
-
   initConfig();
   updateConfig();
   initInput();
@@ -430,24 +415,15 @@ bool retro_load_game(const struct retro_game_info* info)
   Core::rom = convertRom(info->data, info->size);
   Core::romSize = (uint32_t)info->size;
 
-  Core::savePath = savePath;
+  Core::save = nullptr;
   Core::saveSize = 0;
 
-  if (Core::bootRom(gamePath))
-  {
-    gameInfo = GameDB::analyze(Core::rom);
+  gamePath = normalizePath(info->path);
+  gameInfo = GameDB::analyze(Core::rom);
 
-    if (!Core::saveSize && gameInfo.saveSize)
-    {
-      Core::stop();
-      Core::resizeSave(gameInfo.saveSize);
-      Core::bootRom(gamePath);
-    }
+  Core::resizeSave(gameInfo.saveSize);
 
-    return true;
-  }
-
-  return false;
+  return Core::bootRom(gamePath);
 }
 
 bool retro_load_game_special(unsigned type, const struct retro_game_info* info, size_t info_size)
@@ -561,6 +537,10 @@ size_t retro_get_memory_size(unsigned id)
   {
     return Settings::expansionPak ? 0x800000 : 0x400000;
   }
+  if (id == RETRO_MEMORY_SAVE_RAM)
+  {
+    return Core::saveSize;
+  }
   return 0;
 }
 
@@ -570,6 +550,10 @@ void* retro_get_memory_data(unsigned id)
   {
     static uint32_t data = Memory::read<uint32_t>(0);
     return &data;
+  }
+  if (id == RETRO_MEMORY_SAVE_RAM)
+  {
+    return Core::save;
   }
   return NULL;
 }
