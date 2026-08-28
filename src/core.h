@@ -39,6 +39,10 @@ namespace Core {
     void start();
     void stop();
 
+#ifdef __LIBRETRO__
+    void runLoop();
+#endif
+
     void countFrame();
     void writeSave(uint32_t address, uint8_t value);
     void schedule(void (*function)(), uint32_t cycles);

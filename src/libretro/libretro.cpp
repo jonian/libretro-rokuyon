@@ -4,6 +4,7 @@
 #include <vector>
 #include <regex>
 #include <fstream>
+#include <atomic>
 
 #include "gamedb.h"
 #include "libretro.h"
@@ -18,6 +19,8 @@
 #ifndef VERSION
 #define VERSION "0.1"
 #endif
+
+namespace AI { extern std::atomic<bool> ready; }
 
 static retro_environment_t envCallback;
 static retro_video_refresh_t videoCallback;
@@ -270,11 +273,24 @@ static void renderVideo()
 
 static void renderAudio()
 {
+  if (!AI::ready.load()) return;
+
   static int16_t buffer[1024 * 2];
   AI::fillBuffer((uint32_t*)buffer);
 
   uint32_t size = sizeof(buffer) / (2 * sizeof(int16_t));
   audioBatchCallback(buffer, size);
+}
+
+static void stopCore()
+{
+  Core::stop();
+
+  if (Core::rom) { delete[] Core::rom; Core::rom = nullptr; }
+  if (Core::save) { delete[] Core::save; Core::save = nullptr; }
+
+  Core::romSize = 0;
+  Core::saveSize = 0;
 }
 
 static uint8_t* convertRom(const void* data, const size_t& size)
@@ -345,7 +361,7 @@ void retro_get_system_av_info(retro_system_av_info* info)
   info->geometry.max_height = info->geometry.base_height;
   info->geometry.aspect_ratio = 4.0 / 3.0;
 
-  info->timing.fps = gameInfo.ntsc ? 60.0 : 50.0;
+  info->timing.fps = 60.0;
   info->timing.sample_rate = 48000.0;
 }
 
@@ -410,20 +426,21 @@ bool retro_load_game(const struct retro_game_info* info)
   updateConfig();
   initInput();
 
-  Core::stop();
+  stopCore();
 
   Core::rom = convertRom(info->data, info->size);
   Core::romSize = (uint32_t)info->size;
-
-  Core::save = nullptr;
-  Core::saveSize = 0;
 
   gamePath = normalizePath(info->path);
   gameInfo = GameDB::analyze(Core::rom);
 
   Core::resizeSave(gameInfo.saveSize);
 
-  return Core::bootRom(gamePath);
+  if (Core::bootRom(gamePath))
+    return true;
+  stopCore();
+
+  return false;
 }
 
 bool retro_load_game_special(unsigned type, const struct retro_game_info* info, size_t info_size)
@@ -433,13 +450,7 @@ bool retro_load_game_special(unsigned type, const struct retro_game_info* info, 
 
 void retro_unload_game(void)
 {
-  Core::stop();
-
-  Core::romSize = 0;
-  if (Core::rom) delete[] Core::rom;
-
-  Core::saveSize = 0;
-  if (Core::save) delete[] Core::save;
+  stopCore();
 }
 
 void retro_reset(void)
@@ -493,12 +504,10 @@ void retro_run(void)
       PIF::releaseKey(i);
   }
 
-  Core::start();
+  Core::runLoop();
 
   renderVideo();
   renderAudio();
-
-  Core::stop();
 }
 
 void retro_set_controller_port_device(unsigned port, unsigned device)

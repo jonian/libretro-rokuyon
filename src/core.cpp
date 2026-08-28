@@ -80,6 +80,10 @@ namespace Core {
     uint32_t saveSize;
     bool saveDirty;
 
+#ifdef __LIBRETRO__
+    bool frameDone;
+#endif
+
     void runLoop();
     void saveLoop();
     void updateSave();
@@ -150,10 +154,8 @@ bool Core::bootRom(const std::string &path) {
     RSP_CP0::reset();
     RSP_CP2::reset();
 
-#ifndef __LIBRETRO__
     // Start the emulator
     start();
-#endif
     return true;
 }
 
@@ -185,8 +187,10 @@ void Core::start() {
     // Start the threads if emulation wasn't running
     if (!running) {
         running = true;
+#ifndef __LIBRETRO__
         emuThread = new std::thread(runLoop);
         saveThread = new std::thread(saveLoop);
+#endif
     }
 }
 
@@ -198,17 +202,24 @@ void Core::stop() {
             condVar.notify_one();
         }
 
+#ifndef __LIBRETRO__
         // Stop the threads if emulation was running
         emuThread->join();
         saveThread->join();
         delete emuThread;
         delete saveThread;
+#endif
         RDP::finishThread();
     }
 }
 
 void Core::runLoop() {
+#ifdef __LIBRETRO__
+    frameDone = false;
+    while (!frameDone) {
+#else
     while (running) {
+#endif
         // Run the CPUs until the next scheduled task
         while (tasks[0].cycles > globalCycles) {
             // Run a CPU opcode if ready and schedule the next one
@@ -250,6 +261,9 @@ void Core::saveLoop() {
 }
 
 void Core::countFrame() {
+#ifdef __LIBRETRO__
+    frameDone = true;
+#endif
     // Calculate the time since the FPS was last updated
     std::chrono::duration<double> fpsTime = std::chrono::steady_clock::now() - lastFpsTime;
 
